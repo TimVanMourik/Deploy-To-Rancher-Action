@@ -26,4 +26,5 @@ ADD . /plugin
 # Install built gem locally
 RUN bundle exec rake install
 # By default execute plugin code
-CMD 'rancher-deployer'
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
