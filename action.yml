@@ -1,0 +1,41 @@
+name: Rancher Deploy Action
+description: Automatically deploy to Rancher
+
+author: Tim van Mourik <timvanmourik@gmail.com>
+
+inputs:
+  rancher_access_key:
+    description: Access key
+    required: true
+  rancher_secret_key:
+    description: Secret key
+    required: true
+  source_branch:
+    description: Target branch
+    required: true
+  config_file:
+    description: Rancher deployment config
+    required: true
+  git_tag:
+    description: Git tag
+    required: false
+  commit_sha:
+    description: Git sha
+    required: false
+    default: ${{ github.sha }}
+  git_repo:
+    description: Repository name
+    required: false
+    default: ${{ github.repository }}
+  logging:
+    description: Logging level
+    required: false
+    default: info
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+
+branding:
+  icon: "award"
+  color: "green"

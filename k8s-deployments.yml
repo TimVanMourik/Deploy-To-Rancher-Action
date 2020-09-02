@@ -1,0 +1,66 @@
+.common: &common
+    server_url: "https://rancher.ctcue.io"
+    project: CD
+    access_key: <%= ENV['RANCHER_ACCESS_KEY'] %>
+    secret_key: <%= ENV['RANCHER_SECRET_KEY'] %>
+    kubectl_options_patch: -p '{"spec":{"template":{"metadata":{"labels":{"sha":"<%= ENV['GIT_COMMIT_SHA'] %>"}}}}}'
+
+.develop: &develop
+    <<: *common
+    branch: develop
+    namespace: dev-ctcue-io
+    environments:
+        - develop-server
+        - develop-client
+
+.staging: &staging
+    <<: *common
+    branch: staging
+    namespace: staging-ctcue-io
+    environments:
+        - staging-server
+        - staging-client
+
+.master: &master
+    <<: *common
+    branch: master
+    namespace: production-ctcue-io
+    environments:
+        - production-server
+        - production-client
+
+develop-server:
+    <<: *develop
+    image: registry.ctcue.com/ctnext-server:latest
+    services:
+        - develop-ctreach-server
+
+develop-client:
+    <<: *develop
+    image: registry.ctcue.com/ctnext-client:latest
+    services:
+        - develop-ctreach-client
+
+staging-server:
+    <<: *staging
+    image: registry.ctcue.com/ctnext-server:staging
+    services:
+        - staging-ctreach-server
+
+staging-client:
+    <<: *staging
+    image: registry.ctcue.com/ctnext-client:staging
+    services:
+        - staging-ctreach-client
+
+production-server:
+    <<: *master
+    image: registry.ctcue.com/ctnext-server:master
+    services:
+        - production-ctreach-server
+
+production-client:
+    <<: *master
+    image: registry.ctcue.com/ctnext-client:master
+    services:
+        - production-ctreach-client

@@ -19,7 +19,7 @@ module RancherDeployer
 
     def initialize
       @config         = {}
-      @current_branch = ENV.fetch('DRONE_SOURCE_BRANCH')
+      @current_branch = ENV.fetch('INPUT_SOURCE_BRANCH')
       logger.debug %Q{Running plugin for branch "#{current_branch}"}
     end
 
@@ -42,24 +42,15 @@ module RancherDeployer
       env_config.fetch('image') do
         logger.debug %Q{No image provided in config for #{env_name}, will build image name from env variables}
         image_prefix = config.fetch('image_prefix', 'drone')
-        branch_slug  = ENV['DRONE_SOURCE_BRANCH'].to_s.gsub(/\/+/, '-')
-        short_sha    = ENV['DRONE_COMMIT_SHA'].to_s[0, 8]
-        repo         = ENV['DRONE_REPO'].to_s.downcase
+        branch_slug  = ENV['INPUT_SOURCE_BRANCH'].to_s.gsub(/\/+/, '-')
+        short_sha    = ENV['INPUT_COMMIT_SHA'].to_s[0, 8]
+        repo         = ENV['INPUT_GIT_REPO'].to_s.downcase
         "#{repo}:#{image_prefix}-#{branch_slug}-#{short_sha}"
       end
     end
 
     def on_tag?
-      !ENV['DRONE_TAG'].to_s.empty?
-    end
-
-    # Dry-run flag
-    def dry_run?
-      !ENV['PLUGIN_DRY_RUN'].to_s.empty?
-    end
-
-    def color?
-      ENV.fetch('PLUGIN_COLORS', 'true') != 'false'
+      !ENV['INPUT_GIT_TAG'].to_s.empty?
     end
 
     def deploy!
@@ -69,7 +60,6 @@ module RancherDeployer
       logger.info "Will deploy to environment(s): #{environments.keys}"
       # Iterate through configurations and deploy services
       environments.each do |name, config|
-        logger.debug "Running on agent #{ENV['DRONE_MACHINE']}, deploying to project #{config['project']} at #{config['server_url']}"
         # Login command
         logger.info "Logging in to rancher at #{config['server_url']} and selecting first project"
         shell.run('rancher login', config['server_url'], '-t', "#{config['access_key']}:#{config['secret_key']}", (config['login_options'] if config['login_options']), in: echo_1, only_output_on_error: true)
@@ -86,7 +76,7 @@ module RancherDeployer
             config['services'].each do |service|
               logger.debug "Updating service #{service}"
               shell.run("rancher kubectl set image deployment #{service} #{service}=#{image_to_deploy}#{" #{config['kubectl_options']}" if config['kubectl_options']}", '-n', config['namespace'])
-              logger.debug "Patch service spec #{service} with SHA #{ENV['DRONE_COMMIT']}"
+              logger.debug "Patch service spec #{service} with SHA #{ENV['INPUT_COMMIT_SHA']}"
               shell.run("rancher kubectl patch deployment #{service} #{" #{config['kubectl_options_patch']}" if config['kubectl_options_patch']}", '-n', config['namespace'])
             end
         rescue
@@ -121,8 +111,7 @@ module RancherDeployer
 
     # Return a shell wrapper
     def shell
-      @_cmd ||= TTY::Command.new(logger: logger, dry_run: dry_run?, color: color?)
-    end
+      @_cmd ||= TTY::Command.new(logger: logger)
 
     # Used as stdin for login command
     def echo_1
@@ -136,17 +125,17 @@ module RancherDeployer
     def logger
       @_logger ||= begin
         Logger.new($stdout).tap do |l|
-          l.level = ENV.fetch('PLUGIN_LOGGING', 'info')
+          l.level = ENV.fetch('INPUT_LOGGING', 'info')
         end
       end
     end
 
     def validate_config!
-      if ENV['PLUGIN_CONFIG'].to_s.empty?
-        raise MissingConfig, %q{No configuration file set, please configure using ENV['PLUGIN_CONFIG']}
+      if ENV['INPUT_CONFIG_FILE'].to_s.empty?
+        raise MissingConfig, %q{No configuration file set, please configure using ENV['INPUT_CONFIG_FILE']}
       end
-      raise MissingConfig, "No configuration at #{ENV['PLUGIN_CONFIG']}" unless File.exists?(ENV['PLUGIN_CONFIG'])
-      File.realpath(ENV['PLUGIN_CONFIG'])
+      raise MissingConfig, "No configuration at #{ENV['INPUT_CONFIG_FILE']}" unless File.exists?(ENV['INPUT_CONFIG_FILE'])
+      File.realpath(ENV['INPUT_CONFIG_FILE'])
     end
   end
 end
