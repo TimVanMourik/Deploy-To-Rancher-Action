@@ -1,4 +1,4 @@
-name: Rancher Deploy Action
+name: Rancher Deploy Action - test
 description: Automatically deploy to Rancher
 
 author: Tim van Mourik <timvanmourik@gmail.com>
