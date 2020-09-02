@@ -3,4 +3,7 @@
 # x would be for showing the commands before they are executed
 set -eu
 
+export GEM_HOME="/usr/local/bundle"
+export PATH=$GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
+
 rancher-deployer
