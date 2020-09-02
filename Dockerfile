@@ -16,6 +16,8 @@ ENV GEM_HOME="/usr/local/bundle"
 ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 
 WORKDIR /plugin
+RUN export PATH=${PATH}:/plugin
+
 # Files that will change bundle dependencies
 ADD Gemfile* *.gemspec /plugin/
 ADD lib/rancher_deployer/version.rb /plugin/lib/rancher_deployer/
@@ -27,4 +29,5 @@ ADD . /plugin
 RUN bundle exec rake install
 # By default execute plugin code
 COPY entrypoint.sh /entrypoint.sh
+
 ENTRYPOINT ["/entrypoint.sh"]

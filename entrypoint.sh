@@ -3,8 +3,4 @@
 # x would be for showing the commands before they are executed
 set -eu
 
-pwd
-echo ---
-ls /
-cd /plugin
 rancher-deployer
